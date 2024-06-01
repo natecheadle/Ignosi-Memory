@@ -1,0 +1,194 @@
+{
+  "version": 3,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 21,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "Desktop-Default",
+      "hidden": true,
+      "generator": "Ninja",
+      "cacheVariables": {
+        "VCPKG_OVERLAY_TRIPLETS": "${sourceDir}/cmake",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+      }
+    },
+    {
+      "name": "GCC",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "gcc",
+        "CMAKE_CXX_COMPILER": "g++"
+      }
+    },
+    {
+      "name": "LLVM",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_CXX_COMPILER": "clang++"
+      }
+    },
+    {
+      "name": "Debug",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      },
+      "binaryDir": "${sourceDir}/out/build/Debug"
+    },
+    {
+      "name": "Release",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      },
+      "binaryDir": "${sourceDir}/out/build/Release"
+    },
+    {
+      "name": "MSVC",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "cl",
+        "CMAKE_CXX_COMPILER": "cl"
+      }
+    },
+    {
+      "name": "OSX",
+      "hidden": true,
+      "inherits": "Desktop-Default",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Darwin"
+      }
+    },
+    {
+      "name": "OSX-LLVM-Debug",
+      "hidden": true,
+      "inherits": [
+        "OSX",
+        "Debug",
+        "LLVM"
+      ],
+      "cacheVariables": {
+        "VCPKG_TARGET_TRIPLET": "arm64-osx-llvm"
+      }
+    },
+    {
+      "name": "OSX-LLVM-Release",
+      "inherits": [
+        "OSX",
+        "Release",
+        "LLVM"
+      ],
+      "cacheVariables": {
+        "VCPKG_TARGET_TRIPLET": "arm64-osx-llvm"
+      }
+    },
+    {
+      "name": "OSX-GCC-Debug",
+      "inherits": [
+        "OSX",
+        "Debug",
+        "GCC"
+      ],
+      "cacheVariables": {
+        "VCPKG_TARGET_TRIPLET": "arm64-osx-gcc"
+      }
+    },
+    {
+      "name": "OSX-GCC-Release",
+      "inherits": [
+        "OSX",
+        "Release",
+        "GCC"
+      ],
+      "cacheVariables": {
+        "VCPKG_TARGET_TRIPLET": "arm64-osx-gcc"
+      }
+    },
+    {
+      "name": "Windows",
+      "inherits": "Desktop-Default",
+      "hidden": true,
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      }
+    },
+    {
+      "name": "Windows-MSVC-Debug",
+      "inherits": [
+        "Windows",
+        "MSVC",
+        "Debug"
+      ]
+    },
+    {
+      "name": "Windows-MSVC-Release",
+      "inherits": [
+        "Windows",
+        "MSVC",
+        "Release"
+      ]
+    },
+    {
+      "name": "Linux",
+      "inherits": "Desktop-Default",
+      "hidden": true,
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
+      }
+    },
+    {
+      "name": "Linux-GCC-Debug",
+      "inherits": [
+        "Linux",
+        "Debug",
+        "GCC"
+      ],
+      "cacheVariables": {
+        "VCPKG_TARGET_TRIPLET": "x64-linux-gcc"
+      }
+    },
+    {
+      "name": "Linux-GCC-Release",
+      "inherits": [
+        "Linux",
+        "Release",
+        "GCC"
+      ],
+      "cacheVariables": {
+        "VCPKG_TARGET_TRIPLET": "x64-linux-gcc"
+      }
+    },
+    {
+      "name": "Linux-LLVM-Debug",
+      "inherits": [
+        "Linux",
+        "Debug",
+        "LLVM"
+      ],
+      "cacheVariables": {
+        "VCPKG_TARGET_TRIPLET": "x64-linux-llvm"
+      }
+    },
+    {
+      "name": "Linux-LLVM-Release",
+      "inherits": [
+        "Linux",
+        "Release",
+        "LLVM"
+      ],
+      "cacheVariables": {
+        "VCPKG_TARGET_TRIPLET": "x64-linux-llvm"
+      }
+    }
+  ]
+}
