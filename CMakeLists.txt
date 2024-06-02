@@ -12,6 +12,5 @@ enable_testing()
 
 add_compile_definitions(PUBLIC $<$<CONFIG:Debug>:DEBUG>)
 
-add_subdirectory("app")
 add_subdirectory("lib")
 add_subdirectory("test")
