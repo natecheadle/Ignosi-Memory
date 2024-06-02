@@ -47,4 +47,4 @@ compile_commands.json
 .DS_Store
 
 # User Specifc Files
-CMakeUsersPresets.json
+CMakeUserPresets.json
