@@ -79,7 +79,7 @@ TEST_F(dll_allocate_fixture, validate_create_destroy) {
 }
 
 TEST_F(dll_allocate_fixture, validate_create_destroy_args) {
-  dll::dll_pointer<TestObject> ptr =
+  dll::dll_unique_ptr<TestObject> ptr =
       dll::make_unique_dll_obj<TestObject>(1.0, 2.0);
 
   ASSERT_EQ(*ptr, TestObject(1.0, 2.0));
@@ -90,25 +90,16 @@ TEST_F(dll_allocate_fixture, validate_create_throwing_object) {
                std::runtime_error);
 }
 
-TEST_F(dll_allocate_fixture, validate_convert_unique_ptr) {
-  dll::dll_pointer<TestObject> pObj = dll::make_unique_dll_obj<TestObject>();
-  dll::dll_unique_ptr<TestObject> pObjUnique(
-      pObj.release(), &(dll::dll_pointer<TestObject>::destroy));
-
-  ASSERT_EQ(pObj.get(), nullptr);
-  ASSERT_NE(pObjUnique.get(), nullptr);
-}
-
 TEST_F(dll_allocate_fixture, validate_create_derived) {
-  dll::dll_pointer<TestObject> pObj =
-      dll::make_unique_dll_obj<DerivedTestObject>();
+  dll::dll_unique_ptr<TestObject> pObj = dll::cast_unique_dll_ptr<TestObject>(
+      dll::make_unique_dll_obj<DerivedTestObject>());
 }
 
 TEST_F(dll_allocate_fixture, validate_create_shared_derived) {
-  dll::dll_pointer<DerivedTestObject> pObj =
+  dll::dll_unique_ptr<DerivedTestObject> pObj =
       dll::make_unique_dll_obj<DerivedTestObject>(1.0, 2.0, 3.0);
   std::shared_ptr<DerivedTestObject> pObjShared1(
-      pObj.release(), &(dll::dll_pointer<TestObject>::destroy));
+      pObj.release(), &dll::destroy<DerivedTestObject>);
   std::shared_ptr<TestObject> pObjShared2(pObjShared1);
 
   pObjShared1->Value1 = 10.0;
