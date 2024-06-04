@@ -83,7 +83,7 @@ steps:
     workingDirectory: '.' 
     cmakeArgs: --build $(Build.BinariesDirectory) 
     
-- script: $(Build.BinariesDirectory)/test/ignosi-test
+- script: $(Build.BinariesDirectory)/test/ignosi-memory-test
   displayName: "Run Unit Tests"
 
 - task: PublishTestResults@2
