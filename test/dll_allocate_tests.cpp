@@ -11,8 +11,6 @@
 namespace ignosi::memory::test {
 namespace {
 
-struct TestObject;
-
 struct TestObject {
   TestObject() : Value1(0.0), Value2(0.0) {}
   TestObject(double value1, double value2) : Value1(value1), Value2(value2) {}
