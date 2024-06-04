@@ -1,9 +1,11 @@
 #pragma once
 
+#include <dll_allocate.h>
+
 #include <limits>
 #include <new>
 
-namespace Ignosi::dll {
+namespace ignosi::memory {
 
 template <typename T>
 class dll_allocator {
@@ -19,14 +21,14 @@ class dll_allocator {
     if (n > std::numeric_limits<std::size_t>::max() / sizeof(T))
       throw std::bad_array_new_length();
 
-    if (auto p = static_cast<T*>(dll_allocate(n * sizeof(T)))) {
+    if (auto p = static_cast<T*>(ignosi_memory_allocate(n * sizeof(T)))) {
       return p;
     }
 
     throw std::bad_alloc();
   }
 
-  void deallocate(T* p, std::size_t) noexcept { dll_deallocate(p); }
+  void deallocate(T* p, std::size_t) noexcept { ignosi_memory_deallocate(p); }
 };
 
 template <class T, class U>
