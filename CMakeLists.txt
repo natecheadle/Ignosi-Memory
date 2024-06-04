@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.21)
 
-project(my-project)
+project(ignosi-memory)
 
 execute_process(
   COMMAND
