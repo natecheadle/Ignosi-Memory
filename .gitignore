@@ -35,6 +35,7 @@
 [Oo]ut/
 [Bb]uild/
 [Bb]in/
+[Ii]nstall/
 
 # IDE Files and Folders
 compile_commands.json
