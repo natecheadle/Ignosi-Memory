@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.21)
 
-project(ignosi-test)
+project(ignosi-memory-test)
 
 include(GoogleTest)
 
@@ -12,8 +12,9 @@ add_executable(${PROJECT_NAME} "main.cpp" "dll_allocate_tests.cpp"
 find_package(GTest CONFIG REQUIRED)
 find_package(fmt CONFIG REQUIRED)
 
-target_link_libraries(${PROJECT_NAME} PRIVATE GTest::gtest ignosi-dll
-                                              ignosi-allocator fmt::fmt)
+target_link_libraries(
+  ${PROJECT_NAME} PRIVATE GTest::gtest ignosi-memory-allocate-cpp
+                          ignosi-memory-allocator fmt::fmt)
 
 gtest_add_tests(TARGET ${PROJECT_NAME})
 if(WIN32)
@@ -25,3 +26,9 @@ if(WIN32)
             $<TARGET_FILE_DIR:${PROJECT_NAME}>
     COMMAND_EXPAND_LISTS)
 endif()
+
+install(
+  TARGETS ${PROJECT_NAME}
+  RUNTIME DESTINATION bin
+  LIBRARY DESTINATION lib
+  ARCHIVE DESTINATION lib)

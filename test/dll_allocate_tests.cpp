@@ -8,10 +8,8 @@
 
 #include "memory_leak_detector.h"
 
-namespace Ignosi::test {
+namespace ignosi::memory::test {
 namespace {
-
-struct TestObject;
 
 struct TestObject {
   TestObject() : Value1(0.0), Value2(0.0) {}
@@ -75,40 +73,31 @@ struct DerivedTestObject : public TestObject {
 class dll_allocate_fixture : public memory_leak_detector_fixture {};
 
 TEST_F(dll_allocate_fixture, validate_create_destroy) {
-  ASSERT_NO_THROW(dll::make_unique_dll_obj<TestObject>());
+  ASSERT_NO_THROW(make_unique_dll_obj<TestObject>());
 }
 
 TEST_F(dll_allocate_fixture, validate_create_destroy_args) {
-  dll::dll_pointer<TestObject> ptr =
-      dll::make_unique_dll_obj<TestObject>(1.0, 2.0);
+  dll_unique_ptr<TestObject> ptr =
+      make_unique_dll_obj<TestObject>(1.0, 2.0);
 
   ASSERT_EQ(*ptr, TestObject(1.0, 2.0));
 }
 
 TEST_F(dll_allocate_fixture, validate_create_throwing_object) {
-  ASSERT_THROW(dll::make_unique_dll_obj<ThrowingTestObject>(),
+  ASSERT_THROW(make_unique_dll_obj<ThrowingTestObject>(),
                std::runtime_error);
 }
 
-TEST_F(dll_allocate_fixture, validate_convert_unique_ptr) {
-  dll::dll_pointer<TestObject> pObj = dll::make_unique_dll_obj<TestObject>();
-  dll::dll_unique_ptr<TestObject> pObjUnique(
-      pObj.release(), &(dll::dll_pointer<TestObject>::destroy));
-
-  ASSERT_EQ(pObj.get(), nullptr);
-  ASSERT_NE(pObjUnique.get(), nullptr);
-}
-
 TEST_F(dll_allocate_fixture, validate_create_derived) {
-  dll::dll_pointer<TestObject> pObj =
-      dll::make_unique_dll_obj<DerivedTestObject>();
+  dll_unique_ptr<TestObject> pObj = cast_unique_dll_ptr<TestObject>(
+      make_unique_dll_obj<DerivedTestObject>());
 }
 
 TEST_F(dll_allocate_fixture, validate_create_shared_derived) {
-  dll::dll_pointer<DerivedTestObject> pObj =
-      dll::make_unique_dll_obj<DerivedTestObject>(1.0, 2.0, 3.0);
+  dll_unique_ptr<DerivedTestObject> pObj =
+      make_unique_dll_obj<DerivedTestObject>(1.0, 2.0, 3.0);
   std::shared_ptr<DerivedTestObject> pObjShared1(
-      pObj.release(), &(dll::dll_pointer<TestObject>::destroy));
+      pObj.release(), &destroy<DerivedTestObject>);
   std::shared_ptr<TestObject> pObjShared2(pObjShared1);
 
   pObjShared1->Value1 = 10.0;
@@ -120,9 +109,9 @@ TEST_F(dll_allocate_fixture, validate_create_shared_derived) {
 }
 
 TEST_F(dll_allocate_fixture, validate_create_dll_allocator) {
-  std::vector<TestObject, dll::dll_allocator<TestObject>> testVector;
+  std::vector<TestObject, dll_allocator<TestObject>> testVector;
   for (double i = 0.0; i < 10.0; ++i) {
     ASSERT_NO_THROW(testVector.push_back(TestObject(i, i * 2.0)));
   }
 }
-}  // namespace Ignosi::test
+}  // namespace ignosi::memory::test
