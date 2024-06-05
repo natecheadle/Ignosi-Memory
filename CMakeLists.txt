@@ -2,6 +2,10 @@ cmake_minimum_required(VERSION 3.21)
 
 project(ignosi-memory)
 
+if(NOT DEFINED BUILD_TESTS)
+  set(BUILD_TESTS TRUE)
+endif()
+
 execute_process(
   COMMAND
     ${CMAKE_COMMAND} -E create_symlink
@@ -13,4 +17,9 @@ enable_testing()
 add_compile_definitions(PUBLIC $<$<CONFIG:Debug>:DEBUG>)
 
 add_subdirectory("lib")
-add_subdirectory("test")
+
+if(BUILD_TESTS)
+  add_subdirectory("test")
+endif()
+
+install(FILES "${CMAKE_SOURCE_DIR}/LICENSE" DESTINATION share/ignosi-memory)
