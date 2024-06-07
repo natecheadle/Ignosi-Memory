@@ -9,26 +9,26 @@
 namespace ignosi::memory {
 
 template <typename T>
-using dll_unique_ptr = std::unique_ptr<T, void (*)(T*)>;
+using DllUniquePtr = std::unique_ptr<T, void (*)(T*)>;
 
 template <typename T>
-static void destroy(T* pObj) {
+static void Destroy(T* pObj) {
   if (pObj) {
     pObj->~T();
-    ignosi_memory_deallocate(pObj);
+    IgnosiMemoryDeallocate(pObj);
   }
 }
 
 template <typename T, typename... Args>
-dll_unique_ptr<T> make_unique_dll_obj(Args... args) {
-  void* pNewMem = ignosi_memory_allocate(sizeof(T));
+DllUniquePtr<T> MakeUniqueDllObject(Args... args) {
+  void* pNewMem = IgnosiMemoryAllocate(sizeof(T));
 
   if (pNewMem) {
     try {
       T* newObj = new (pNewMem) T(std::forward<Args>(args)...);
-      return dll_unique_ptr<T>(newObj, &destroy);
+      return DllUniquePtr<T>(newObj, &Destroy);
     } catch (...) {
-      ignosi_memory_deallocate(pNewMem);
+      IgnosiMemoryDeallocate(pNewMem);
       throw;
     }
   }
@@ -36,8 +36,8 @@ dll_unique_ptr<T> make_unique_dll_obj(Args... args) {
 }
 
 template <typename U, typename T>
-dll_unique_ptr<U> cast_unique_dll_ptr(dll_unique_ptr<T>&& obj) {
-  return dll_unique_ptr<U>(static_cast<U*>(obj.release()), &destroy<U>);
+DllUniquePtr<U> CastDllUniquePtr(DllUniquePtr<T>&& obj) {
+  return DllUniquePtr<U>(static_cast<U*>(obj.release()), &Destroy<U>);
 }
 
 }  // namespace ignosi::memory
