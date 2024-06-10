@@ -50,18 +50,20 @@ class DllObjectPool {
     friend bool operator<=(const Address& lhs, const Address& rhs) {
       return lhs == rhs || lhs < rhs;
     }
-    friend bool operator<=(const Address& lhs, const Address& rhs) {
-      return lhs == rhs || lhs < rhs;
+    friend bool operator>=(const Address& lhs, const Address& rhs) {
+      return lhs == rhs || lhs > rhs;
     }
   };
 
  private:
   union obj {
+    obj() {}
     T object;
     std::array<std::uint8_t, sizeof(T)> bytes;
   };
 
   struct Data {
+    Data() : is_alive(false), previous(kNullAddress), next(kNullAddress) {}
     obj obj_data;
     bool is_alive;
     Address previous;
@@ -70,12 +72,13 @@ class DllObjectPool {
 
   static constexpr std::uint16_t kDefaultBucketSize = 256;
   static constexpr Address kNullAddress =
-      Address{.bucket = std::numeric_limits<std::uint32_t>(),
-              .index = std::numeric_limits<std::uint32_t>()};
+      Address{.bucket = std::numeric_limits<std::uint32_t>::max(),
+              .index = std::numeric_limits<std::uint32_t>::max()};
 
   std::mutex m_pool_mutex;
   std::uint32_t m_bucket_size;
-  std::vector<std::vector<Data, DllAllocator<Data>>, DllAllocator<Data>>
+  std::vector<std::vector<Data, DllAllocator<Data>>,
+              DllAllocator<std::vector<Data, DllAllocator<Data>>>>
       m_objects;
 
   Address m_first_empty;
@@ -84,9 +87,11 @@ class DllObjectPool {
  public:
   DllObjectPool(std::uint32_t bucket_size)
       : m_bucket_size(bucket_size),
-        m_objects(std::vector<Data>(bucket_size)),
         m_first_empty(0, 0),
-        m_first_occupied(m_objects.size(), bucket_size) {}
+        m_first_occupied(m_objects.size(), bucket_size) {
+    m_objects.resize(1);
+    m_objects[0].resize(bucket_size);
+  }
 
   DllObjectPool() : DllObjectPool(kDefaultBucketSize) {}
 
@@ -96,6 +101,11 @@ class DllObjectPool {
 
   const std::optional<T>& At(const Address& address) const {
     return m_objects.at(address.bucket).at(address.index);
+  }
+
+  template <typename... Args>
+  T* Create(Args&&... args) {
+    return Create(T(std::forward<Args>(args)...));
   }
 
   T* Create(const T& obj) { return Create(T(obj)); }
@@ -144,8 +154,8 @@ class DllObjectPool {
     std::unique_lock<std::mutex> lock(m_pool_mutex);
 
     Data* pDataObject = reinterpret_cast<Data*>(pObject);
-    pObject->object->~T();
-    pObject->is_alive = false;
+    pDataObject->obj_data.object.~T();
+    pDataObject->is_alive = false;
 
     Address address_to_destroy = getAddress(pDataObject);
 
@@ -165,7 +175,8 @@ class DllObjectPool {
     } else {
       Address previous_empty = findPrevious(m_first_empty, address_to_destroy);
 
-      pDataObject->next = m_objects[previous_empty][previous_empty.index].next;
+      pDataObject->next =
+          m_objects[previous_empty.bucket][previous_empty.index].next;
       m_objects[previous_empty.bucket][previous_empty.index].next =
           address_to_destroy;
     }
@@ -177,7 +188,7 @@ class DllObjectPool {
     m_objects.resize(m_objects.size() + 1);
 
     m_first_empty = {newBucket, 0};
-    std::vector<Data>& bucket = m_objects[newBucket];
+    std::vector<Data, DllAllocator<Data>>& bucket = m_objects.at(newBucket);
     bucket.resize(m_bucket_size);
 
     bucket.front().next = {newBucket, 1};

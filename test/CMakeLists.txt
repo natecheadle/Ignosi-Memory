@@ -6,8 +6,9 @@ include(GoogleTest)
 
 set(CMAKE_CXX_STANDARD 20)
 
-add_executable(${PROJECT_NAME} "main.cpp" "dll_allocate_tests.cpp"
-                               "dll_object_pool_tests.cpp")
+add_executable(
+  ${PROJECT_NAME} "main.cpp" "dll_allocate_tests.cpp"
+                  "dll_object_pool_tests.cpp" "memory_leak_detector.cpp")
 
 find_package(GTest CONFIG REQUIRED)
 find_package(fmt CONFIG REQUIRED)

@@ -70,28 +70,28 @@ struct DerivedTestObject : public TestObject {
 
 };  // namespace
 
-class dll_allocate_fixture : public memory_leak_detector_fixture {};
+class DllAllocateFixture : public MemoryLeakDetectorFixture {};
 
-TEST_F(dll_allocate_fixture, validate_create_destroy) {
+TEST_F(DllAllocateFixture, validate_create_destroy) {
   ASSERT_NO_THROW(MakeUniqueDllObject<TestObject>());
 }
 
-TEST_F(dll_allocate_fixture, validate_create_destroy_args) {
+TEST_F(DllAllocateFixture, validate_create_destroy_args) {
   DllUniquePtr<TestObject> ptr = MakeUniqueDllObject<TestObject>(1.0, 2.0);
 
   ASSERT_EQ(*ptr, TestObject(1.0, 2.0));
 }
 
-TEST_F(dll_allocate_fixture, validate_create_throwing_object) {
+TEST_F(DllAllocateFixture, validate_create_throwing_object) {
   ASSERT_THROW(MakeUniqueDllObject<ThrowingTestObject>(), std::runtime_error);
 }
 
-TEST_F(dll_allocate_fixture, validate_create_derived) {
+TEST_F(DllAllocateFixture, validate_create_derived) {
   DllUniquePtr<TestObject> pObj =
       CastDllUniquePtr<TestObject>(MakeUniqueDllObject<DerivedTestObject>());
 }
 
-TEST_F(dll_allocate_fixture, validate_create_shared_derived) {
+TEST_F(DllAllocateFixture, validate_create_shared_derived) {
   DllUniquePtr<DerivedTestObject> pObj =
       MakeUniqueDllObject<DerivedTestObject>(1.0, 2.0, 3.0);
   std::shared_ptr<DerivedTestObject> pObjShared1(pObj.release(),
@@ -106,7 +106,7 @@ TEST_F(dll_allocate_fixture, validate_create_shared_derived) {
   ASSERT_EQ(pObjShared2->Value2, 20.0);
 }
 
-TEST_F(dll_allocate_fixture, validate_create_dll_allocator) {
+TEST_F(DllAllocateFixture, validate_create_dll_allocator) {
   std::vector<TestObject, DllAllocator<TestObject>> testVector;
   for (int i = 0; i < 10; ++i) {
     ASSERT_NO_THROW(testVector.push_back(TestObject(i, i * 2.0)));

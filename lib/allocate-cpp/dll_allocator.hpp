@@ -27,6 +27,10 @@ class DllAllocator {
 
     throw std::bad_alloc();
   }
+  template <class... Args>
+  constexpr T* construct_at(T* p, Args&&... args) {
+    return new (static_cast<void*>(p)) T(std::forward<Args>(args)...);
+  }
 
   void deallocate(T* p, std::size_t) noexcept { IgnosiMemoryDeallocate(p); }
 };
