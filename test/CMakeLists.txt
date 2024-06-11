@@ -15,8 +15,9 @@ find_package(fmt CONFIG REQUIRED)
 
 target_link_libraries(
   ${PROJECT_NAME}
-  PRIVATE GTest::gtest ignosi-memory-allocate-cpp ignosi-memory-allocate
-          ignosi-memory-allocator fmt::fmt)
+  PRIVATE GTest::gtest ignosi-memory-allocate-cpp
+ignosi-memory-allocate
+          fmt::fmt )
 
 gtest_add_tests(TARGET ${PROJECT_NAME})
 if(WIN32)

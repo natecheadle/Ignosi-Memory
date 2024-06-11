@@ -4,7 +4,8 @@
 #include <algorithm>
 #include <cstdint>
 #include <dll_object_pool.hpp>
-#include <queue>
+#include "memory_leak_detector.h"
+#include <iostream>
 
 namespace ignosi::memory::test {
 namespace {
@@ -26,13 +27,13 @@ struct Data {
 
 }  // namespace
 
-class DllObjectPoolFixture : public testing::Test {
+class DllObjectPoolFixture : public MemoryLeakDetectorFixture {
  public:
   DllObjectPoolFixture() {}
 
  protected:
-  static constexpr std::uint32_t kBucketSize = 64;
-  DllObjectPool<Data> m_Pool;
+  static constexpr size_t kPoolSize = 8;
+  DllObjectPool<Data> m_Pool{kPoolSize};
 };
 
 TEST_F(DllObjectPoolFixture, ValidateConstruction) {}

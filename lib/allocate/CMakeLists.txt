@@ -5,7 +5,9 @@ project(ignosi-memory-allocate)
 find_path(IGNOSI_DLL_INCLUDE_DIRS "dll_defines.h")
 set(CMAKE_CXX_STANDARD 20)
 
-add_library(${PROJECT_NAME} SHARED "dll_allocate.cpp")
+add_library(
+  ${PROJECT_NAME} SHARED "dll_allocate.cpp" "detail/dll_object_pool_data.cpp"
+                         "dll_object_pool.cpp")
 target_compile_definitions(${PROJECT_NAME} PRIVATE EXPORT)
 
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_LIST_DIR}
@@ -19,4 +21,4 @@ install(
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib)
 
-install(FILES dll_allocate.h DESTINATION include)
+install(FILES "dll_allocate.h" "dll_object_pool.h" DESTINATION include)
