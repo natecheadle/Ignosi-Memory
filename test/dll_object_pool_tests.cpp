@@ -3,6 +3,7 @@
 
 #include <dll_object_pool.hpp>
 #include <iostream>
+#include <vector>
 
 #include "memory_leak_detector.h"
 
@@ -36,4 +37,36 @@ class DllObjectPoolFixture : public MemoryLeakDetectorFixture {
 };
 
 TEST_F(DllObjectPoolFixture, ValidateConstruction) {}
+
+TEST_F(DllObjectPoolFixture, ValidateCreateDestroyTillFull) {
+  std::vector<Data*> objs;
+
+  for (size_t i = 0; i < kPoolSize; ++i) {
+    objs.push_back(m_Pool.Create(Data(i, (double)i)));
+  }
+  for (auto obj : objs) {
+    ASSERT_NE(obj, nullptr);
+  }
+  ASSERT_EQ(m_Pool.Create(Data(11, 11.0)), nullptr);
+  for (auto obj : objs) {
+    m_Pool.Destroy(obj);
+  }
+}
+
+TEST_F(DllObjectPoolFixture, ValidateCreateDestroyTillFullMultiple) {
+  for (int i = 0; i < 5; ++i) {
+    std::vector<Data*> objs;
+
+    for (size_t i = 0; i < kPoolSize; ++i) {
+      objs.push_back(m_Pool.Create(Data(i, (double)i)));
+    }
+    for (auto obj : objs) {
+      ASSERT_NE(obj, nullptr);
+    }
+    ASSERT_EQ(m_Pool.Create(Data(11, 11.0)), nullptr);
+    for (auto obj : objs) {
+      m_Pool.Destroy(obj);
+    }
+  }
+}
 }  // namespace ignosi::memory::test
