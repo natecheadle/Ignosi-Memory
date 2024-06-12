@@ -59,6 +59,7 @@ void* DllObjectPool::Allocate() {
     pNewNode->Previous->Next = pNewNode;
     pNewNode->Next->Previous = pNewNode;
   }
+  m_AllocatedCount++;
 
   return pNew;
 }
@@ -71,6 +72,7 @@ void DllObjectPool::Dealloate(void* pObj) {
   if (m_pFirstEmpty == m_EndNode) {
     pToDestroy->Next = m_EndNode;
     pToDestroy->Previous = nullptr;
+    m_pFirstEmpty = pToDestroy;
   } else if (pToDestroy < m_pFirstEmpty) {
     pToDestroy->Next = m_pFirstEmpty;
     pToDestroy->Previous = nullptr;
@@ -80,8 +82,11 @@ void DllObjectPool::Dealloate(void* pObj) {
     pToDestroy->Previous = findPrevious(m_pFirstEmpty, pToDestroy);
     pToDestroy->Next = pToDestroy->Previous->Next;
     pToDestroy->Previous->Next = pToDestroy;
-    pToDestroy->Next->Previous = pToDestroy;
+    if (pToDestroy->Next != m_EndNode) {
+      pToDestroy->Next->Previous = pToDestroy;
+    }
   }
+  m_AllocatedCount--;
 }
 
 DllObjectPool::Node* DllObjectPool::findPrevious(Node* pFirst, Node* pCurrent) {
@@ -90,7 +95,7 @@ DllObjectPool::Node* DllObjectPool::findPrevious(Node* pFirst, Node* pCurrent) {
     pPrevious = pPrevious->Next;
   }
 
-  return pCurrent;
+  return pPrevious;
 }
 
 }  // namespace ignosi::memory::detail

@@ -18,7 +18,7 @@ EXPORT_SPEC void* IgnosiMemoryPoolAllocate(IgnosiMemoryPool pool) {
     return nullptr;
   }
 
-  return reinterpret_cast<DllObjectPool*>(pool)->Allocate();
+  return static_cast<DllObjectPool*>(pool)->Allocate();
 }
 
 EXPORT_SPEC void IgnosiMemoryPoolDeallocate(IgnosiMemoryPool pool, void* pObj) {
@@ -26,5 +26,19 @@ EXPORT_SPEC void IgnosiMemoryPoolDeallocate(IgnosiMemoryPool pool, void* pObj) {
     return;
   }
 
-  reinterpret_cast<DllObjectPool*>(pool)->Dealloate(pObj);
+  static_cast<DllObjectPool*>(pool)->Dealloate(pObj);
+}
+
+EXPORT_SPEC size_t IgnosiMemoryPoolSize(IgnosiMemoryPool pool) {
+  if (!pool) {
+    return 0;
+  }
+  return static_cast<DllObjectPool*>(pool)->PoolSize();
+}
+
+EXPORT_SPEC size_t IgnosiMemoryPoolAllocatedCount(IgnosiMemoryPool pool) {
+  if (!pool) {
+    return 0;
+  }
+  return static_cast<DllObjectPool*>(pool)->AllocatedCount();
 }

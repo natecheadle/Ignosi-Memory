@@ -17,6 +17,7 @@ class DllObjectPool {
   size_t m_ObjectSize;
   size_t m_PoolSize;
   size_t m_NodeSize;
+  size_t m_AllocatedCount;
 
   std::uint8_t* m_pBuffer;
   Node* m_EndNode;
@@ -30,6 +31,9 @@ class DllObjectPool {
 
   void* Allocate();
   void Dealloate(void* pObj);
+
+  size_t PoolSize() const { return m_PoolSize; }
+  size_t AllocatedCount() const { return m_AllocatedCount; }
 
  private:
   Node* findPrevious(Node* pFirst, Node* pCurrent);
