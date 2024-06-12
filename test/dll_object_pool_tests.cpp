@@ -1,11 +1,10 @@
 #include <fmt/format.h>
 #include <gtest/gtest.h>
 
-#include <algorithm>
-#include <cstdint>
 #include <dll_object_pool.hpp>
-#include "memory_leak_detector.h"
 #include <iostream>
+
+#include "memory_leak_detector.h"
 
 namespace ignosi::memory::test {
 namespace {

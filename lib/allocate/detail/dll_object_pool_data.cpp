@@ -27,16 +27,15 @@ DllObjectPool::DllObjectPool(size_t objectSize, size_t poolSize)
     pPrev = pNext;
     pNext = pNext->Next;
   }
-
 }
 
 DllObjectPool::~DllObjectPool() {
-  std::unique_lock<std::mutex>(m_PoolMutex);
+  std::unique_lock<std::mutex> lock(m_PoolMutex);
   IgnosiMemoryDeallocate(m_pBuffer);
 }
 
 void* DllObjectPool::Allocate() {
-  std::unique_lock<std::mutex>(m_PoolMutex);
+  std::unique_lock<std::mutex> lock(m_PoolMutex);
 
   if (m_pFirstEmpty == m_EndNode) {
     return nullptr;
@@ -65,7 +64,7 @@ void* DllObjectPool::Allocate() {
 }
 
 void DllObjectPool::Dealloate(void* pObj) {
-  std::unique_lock<std::mutex>(m_PoolMutex);
+  std::unique_lock<std::mutex> lock(m_PoolMutex);
 
   Node* pToDestroy = reinterpret_cast<Node*>(
       reinterpret_cast<std::uint8_t*>(pObj) - sizeof(Node));

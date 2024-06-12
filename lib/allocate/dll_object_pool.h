@@ -2,7 +2,7 @@
 
 #include <dll_defines.h>
 
-#include <cstdint>
+#include <cstddef>
 
 using IgnosiMemoryPool = void*;
 

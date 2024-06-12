@@ -2,7 +2,7 @@
 
 #include <dll_defines.h>
 
-#include <cstdint>
+#include <cstddef>
 
 extern "C" {
 EXPORT_SPEC void* IgnosiMemoryAllocate(size_t size);
