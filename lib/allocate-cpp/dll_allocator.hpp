@@ -8,36 +8,40 @@
 namespace ignosi::memory {
 
 template <typename T>
-class dll_allocator {
+class DllAllocator {
  public:
   typedef T value_type;
 
-  dll_allocator() = default;
+  DllAllocator() = default;
 
   template <class U>
-  constexpr dll_allocator(const dll_allocator<U>&) noexcept {}
+  constexpr DllAllocator(const DllAllocator<U>&) noexcept {}
 
   [[nodiscard]] T* allocate(std::size_t n) {
     if (n > std::numeric_limits<std::size_t>::max() / sizeof(T))
       throw std::bad_array_new_length();
 
-    if (auto p = static_cast<T*>(ignosi_memory_allocate(n * sizeof(T)))) {
+    if (auto p = static_cast<T*>(IgnosiMemoryAllocate(n * sizeof(T)))) {
       return p;
     }
 
     throw std::bad_alloc();
   }
+  template <class... Args>
+  constexpr T* construct_at(T* p, Args&&... args) {
+    return new (static_cast<void*>(p)) T(std::forward<Args>(args)...);
+  }
 
-  void deallocate(T* p, std::size_t) noexcept { ignosi_memory_deallocate(p); }
+  void deallocate(T* p, std::size_t) noexcept { IgnosiMemoryDeallocate(p); }
 };
 
 template <class T, class U>
-bool operator==(const dll_allocator<T>&, const dll_allocator<U>&) {
+bool operator==(const DllAllocator<T>&, const DllAllocator<U>&) {
   return true;
 }
 
 template <class T, class U>
-bool operator!=(const dll_allocator<T>&, const dll_allocator<U>&) {
+bool operator!=(const DllAllocator<T>&, const DllAllocator<U>&) {
   return false;
 }
-}  // namespace Ignosi::dll
+}  // namespace ignosi::memory

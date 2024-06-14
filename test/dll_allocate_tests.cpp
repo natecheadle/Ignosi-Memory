@@ -3,7 +3,7 @@
 #include <gtest/gtest.h>
 
 #include <dll_allocator.hpp>
-#include <dll_pointer.hpp>
+#include <dll_unique_ptr.hpp>
 #include <stdexcept>
 
 #include "memory_leak_detector.h"
@@ -70,34 +70,32 @@ struct DerivedTestObject : public TestObject {
 
 };  // namespace
 
-class dll_allocate_fixture : public memory_leak_detector_fixture {};
+class DllAllocateFixture : public MemoryLeakDetectorFixture {};
 
-TEST_F(dll_allocate_fixture, validate_create_destroy) {
-  ASSERT_NO_THROW(make_unique_dll_obj<TestObject>());
+TEST_F(DllAllocateFixture, validate_create_destroy) {
+  ASSERT_NO_THROW(MakeUniqueDllObject<TestObject>());
 }
 
-TEST_F(dll_allocate_fixture, validate_create_destroy_args) {
-  dll_unique_ptr<TestObject> ptr =
-      make_unique_dll_obj<TestObject>(1.0, 2.0);
+TEST_F(DllAllocateFixture, validate_create_destroy_args) {
+  DllUniquePtr<TestObject> ptr = MakeUniqueDllObject<TestObject>(1.0, 2.0);
 
   ASSERT_EQ(*ptr, TestObject(1.0, 2.0));
 }
 
-TEST_F(dll_allocate_fixture, validate_create_throwing_object) {
-  ASSERT_THROW(make_unique_dll_obj<ThrowingTestObject>(),
-               std::runtime_error);
+TEST_F(DllAllocateFixture, validate_create_throwing_object) {
+  ASSERT_THROW(MakeUniqueDllObject<ThrowingTestObject>(), std::runtime_error);
 }
 
-TEST_F(dll_allocate_fixture, validate_create_derived) {
-  dll_unique_ptr<TestObject> pObj = cast_unique_dll_ptr<TestObject>(
-      make_unique_dll_obj<DerivedTestObject>());
+TEST_F(DllAllocateFixture, validate_create_derived) {
+  DllUniquePtr<TestObject> pObj =
+      CastDllUniquePtr<TestObject>(MakeUniqueDllObject<DerivedTestObject>());
 }
 
-TEST_F(dll_allocate_fixture, validate_create_shared_derived) {
-  dll_unique_ptr<DerivedTestObject> pObj =
-      make_unique_dll_obj<DerivedTestObject>(1.0, 2.0, 3.0);
-  std::shared_ptr<DerivedTestObject> pObjShared1(
-      pObj.release(), &destroy<DerivedTestObject>);
+TEST_F(DllAllocateFixture, validate_create_shared_derived) {
+  DllUniquePtr<DerivedTestObject> pObj =
+      MakeUniqueDllObject<DerivedTestObject>(1.0, 2.0, 3.0);
+  std::shared_ptr<DerivedTestObject> pObjShared1(pObj.release(),
+                                                 &Destroy<DerivedTestObject>);
   std::shared_ptr<TestObject> pObjShared2(pObjShared1);
 
   pObjShared1->Value1 = 10.0;
@@ -108,9 +106,9 @@ TEST_F(dll_allocate_fixture, validate_create_shared_derived) {
   ASSERT_EQ(pObjShared2->Value2, 20.0);
 }
 
-TEST_F(dll_allocate_fixture, validate_create_dll_allocator) {
-  std::vector<TestObject, dll_allocator<TestObject>> testVector;
-  for (double i = 0.0; i < 10.0; ++i) {
+TEST_F(DllAllocateFixture, validate_create_dll_allocator) {
+  std::vector<TestObject, DllAllocator<TestObject>> testVector;
+  for (int i = 0; i < 10; ++i) {
     ASSERT_NO_THROW(testVector.push_back(TestObject(i, i * 2.0)));
   }
 }
