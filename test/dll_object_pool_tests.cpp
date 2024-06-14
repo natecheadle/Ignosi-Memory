@@ -6,6 +6,7 @@
 #include <iostream>
 #include <vector>
 
+#include "dll_unique_ptr.hpp"
 #include "memory_leak_detector.h"
 
 namespace ignosi::memory::test {
@@ -39,75 +40,83 @@ class DllObjectPoolFixture : public MemoryLeakDetectorFixture {
 
 TEST_F(DllObjectPoolFixture, ValidateConstruction) {}
 
+TEST_F(DllObjectPoolFixture, ValidatePoolSize) {
+  ASSERT_EQ(m_Pool.PoolSize(), kPoolSize);
+}
+
+TEST_F(DllObjectPoolFixture, ValidateAllocatedCount) {
+  std::vector<DllUniquePtr<Data>> objs;
+
+  for (size_t i = 0; i < kPoolSize; ++i) {
+    objs.push_back(m_Pool.Create(Data(i, (double)i)));
+    ASSERT_EQ(m_Pool.AllocatedCount(), i + 1);
+  }
+}
+
 TEST_F(DllObjectPoolFixture, ValidateCreateDestroyTillFull) {
-  std::vector<Data*> objs;
+  std::vector<DllUniquePtr<Data>> objs;
 
   for (size_t i = 0; i < kPoolSize; ++i) {
     objs.push_back(m_Pool.Create(Data(i, (double)i)));
   }
-  for (auto obj : objs) {
-    ASSERT_NE(obj, nullptr);
+  for (auto& obj : objs) {
+    ASSERT_NE(obj.get(), nullptr);
   }
   ASSERT_EQ(m_Pool.Create(Data(11, 11.0)), nullptr);
-  for (auto obj : objs) {
-    m_Pool.Destroy(obj);
-  }
 }
 
 TEST_F(DllObjectPoolFixture, ValidateCreateDestroyTillFullMultiple) {
   for (int i = 0; i < 5; ++i) {
-    std::vector<Data*> objs;
+    std::vector<DllUniquePtr<Data>> objs;
 
     for (size_t i = 0; i < kPoolSize; ++i) {
       objs.push_back(m_Pool.Create(Data(i, (double)i)));
     }
-    for (auto obj : objs) {
-      ASSERT_NE(obj, nullptr);
+    for (auto& obj : objs) {
+      ASSERT_NE(obj.get(), nullptr);
     }
     ASSERT_EQ(m_Pool.Create(Data(11, 11.0)), nullptr);
-    for (auto obj : objs) {
-      m_Pool.Destroy(obj);
-    }
   }
 }
 
 TEST_F(DllObjectPoolFixture, ValidateCreateDestroyReverseOrder) {
   for (int i = 0; i < 5; ++i) {
-    std::vector<Data*> objs;
+    std::vector<DllUniquePtr<Data>> objs;
 
     for (size_t i = 0; i < kPoolSize; ++i) {
       objs.push_back(m_Pool.Create(Data(i, (double)i)));
     }
-    for (auto obj : objs) {
-      ASSERT_NE(obj, nullptr);
+    for (auto& obj : objs) {
+      ASSERT_NE(obj.get(), nullptr);
     }
     ASSERT_EQ(m_Pool.Create(Data(11, 11.0)), nullptr);
     for (auto it = objs.rbegin(); it != objs.rend(); ++it) {
-      m_Pool.Destroy(*it);
+      it->reset();
     }
   }
 }
 
 TEST_F(DllObjectPoolFixture, ValidateCreateDestroyOutOfOrder) {
   for (int i = 0; i < 5; ++i) {
-    std::vector<Data*> objs;
+    std::vector<DllUniquePtr<Data>> objs;
 
     for (size_t i = 0; i < kPoolSize; ++i) {
       objs.push_back(m_Pool.Create(Data(i, (double)i)));
     }
-    for (auto obj : objs) {
+    for (auto& obj : objs) {
       ASSERT_NE(obj, nullptr);
     }
     ASSERT_EQ(m_Pool.Create(Data(11, 11.0)), nullptr);
     for (size_t i = 0; i < kPoolSize; ++i) {
       if (i % 2 == 0) {
-        m_Pool.Destroy(objs[i]);
-        objs[i] = nullptr;
+        objs[i].reset();
       }
     }
 
     for (size_t i = 0; i < kPoolSize; ++i) {
-      if (objs[i]) m_Pool.Destroy(objs[i]);
+      if (objs[i]) {
+        objs[i].reset();
+      }
       objs[i] = nullptr;
     }
   }
@@ -116,18 +125,15 @@ TEST_F(DllObjectPoolFixture, ValidateCreateDestroyOutOfOrder) {
 TEST_F(DllObjectPoolFixture, ValidateCreateDestroyTillFullMultipleThreads) {
   auto createDestroy = [&]() -> bool {
     try {
-      std::vector<Data*> objs;
+      std::vector<DllUniquePtr<Data>> objs;
 
       for (size_t i = 0; i < kPoolSize / 2; ++i) {
         objs.push_back(m_Pool.Create(Data(i, (double)i)));
       }
-      for (auto obj : objs) {
+      for (auto& obj : objs) {
         if (obj == nullptr) {
           return false;
         }
-      }
-      for (auto obj : objs) {
-        m_Pool.Destroy(obj);
       }
     } catch (...) {
       return false;

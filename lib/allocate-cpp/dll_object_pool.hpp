@@ -4,6 +4,8 @@
 
 #include <utility>
 
+#include "dll_unique_ptr.hpp"
+
 namespace ignosi::memory {
 
 template <typename T>
@@ -16,14 +18,15 @@ class DllObjectPool {
 
   ~DllObjectPool() { IgnosiMemoryPoolDestroy(m_pPool); }
 
-  T* Create(T&& obj) {
+  DllUniquePtr<T> Create(T&& obj) {
     void* pNew = IgnosiMemoryPoolAllocate(m_pPool);
     if (!pNew) {
       return nullptr;
     }
 
     try {
-      return new (pNew) T(std::forward<T>(obj));
+      return {new (pNew) T(std::forward<T>(obj)),
+              [this](T* obj) { Destroy(obj); }};
     } catch (...) {
       IgnosiMemoryPoolDeallocate(m_pPool, pNew);
     }
@@ -34,5 +37,11 @@ class DllObjectPool {
     obj->~T();
     IgnosiMemoryPoolDeallocate(m_pPool, obj);
   }
+
+  size_t PoolSize() const { return IgnosiMemoryPoolSize(m_pPool); }
+  size_t AllocatedCount() const {
+    return IgnosiMemoryPoolAllocatedCount(m_pPool);
+  }
 };
+
 }  // namespace ignosi::memory
