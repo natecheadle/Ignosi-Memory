@@ -16,15 +16,10 @@ DllObjectPool::DllObjectPool(size_t objectSize, size_t poolSize)
 
   m_pFirstEmpty = reinterpret_cast<Node*>(m_pBuffer);
   m_pFirstEmpty->Next = reinterpret_cast<Node*>(m_pBuffer + m_NodeSize);
-  m_pFirstEmpty->Previous = nullptr;
 
-  Node* pPrev = m_pFirstEmpty;
   Node* pNext = m_pFirstEmpty->Next;
   for (size_t i = 1; i < m_PoolSize; ++i) {
     pNext->Next = reinterpret_cast<Node*>(m_pBuffer + m_NodeSize * (i + 1));
-    pNext->Previous = pPrev;
-
-    pPrev = pNext;
     pNext = pNext->Next;
   }
 }
@@ -47,17 +42,13 @@ void* DllObjectPool::Allocate() {
 
   if (m_pFirstFull == m_EndNode) {
     pNewNode->Next = m_EndNode;
-    pNewNode->Previous = nullptr;
   } else if (pNewNode < m_pFirstFull) {
     pNewNode->Next = m_pFirstFull;
-    pNewNode->Previous = nullptr;
-    m_pFirstFull->Previous = pNewNode;
     m_pFirstFull = pNewNode;
   } else {
-    pNewNode->Previous = findPrevious(m_pFirstFull, m_pFirstEmpty);
-    pNewNode->Next = pNewNode->Previous->Next;
-    pNewNode->Previous->Next = pNewNode;
-    pNewNode->Next->Previous = pNewNode;
+    Node* pPrevFull = findPrevious(m_pFirstFull, m_pFirstEmpty);
+    pNewNode->Next = pPrevFull->Next;
+    pPrevFull->Next = pNewNode;
   }
   m_AllocatedCount++;
 
@@ -71,20 +62,14 @@ void DllObjectPool::Dealloate(void* pObj) {
       reinterpret_cast<std::uint8_t*>(pObj) - sizeof(Node));
   if (m_pFirstEmpty == m_EndNode) {
     pToDestroy->Next = m_EndNode;
-    pToDestroy->Previous = nullptr;
     m_pFirstEmpty = pToDestroy;
   } else if (pToDestroy < m_pFirstEmpty) {
     pToDestroy->Next = m_pFirstEmpty;
-    pToDestroy->Previous = nullptr;
-    m_pFirstEmpty->Previous = pToDestroy;
     m_pFirstEmpty = pToDestroy;
   } else {
-    pToDestroy->Previous = findPrevious(m_pFirstEmpty, pToDestroy);
-    pToDestroy->Next = pToDestroy->Previous->Next;
-    pToDestroy->Previous->Next = pToDestroy;
-    if (pToDestroy->Next != m_EndNode) {
-      pToDestroy->Next->Previous = pToDestroy;
-    }
+    Node* pPrevEmpty = findPrevious(m_pFirstEmpty, pToDestroy);
+    pToDestroy->Next = pPrevEmpty->Next;
+    pPrevEmpty->Next = pToDestroy;
   }
   m_AllocatedCount--;
 }

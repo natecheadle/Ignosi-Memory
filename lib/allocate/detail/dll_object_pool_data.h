@@ -2,14 +2,11 @@
 
 #include <mutex>
 
-#include "dll_object_pool.h"
-
 namespace ignosi::memory::detail {
 
 class DllObjectPool {
   struct Node {
     Node* Next;
-    Node* Previous;
   };
 
   std::mutex m_PoolMutex;
