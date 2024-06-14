@@ -11,16 +11,16 @@ class DllObjectPool {
 
   std::mutex m_PoolMutex;
 
-  size_t m_ObjectSize;
-  size_t m_PoolSize;
-  size_t m_NodeSize;
-  size_t m_AllocatedCount;
+  size_t m_ObjectSize{0};
+  size_t m_PoolSize{0};
+  size_t m_NodeSize{0};
+  size_t m_AllocatedCount{0};
 
-  std::uint8_t* m_pBuffer;
-  Node* m_EndNode;
+  std::uint8_t* m_pBuffer{nullptr};
+  Node* m_EndNode{nullptr};
 
-  Node* m_pFirstFull;
-  Node* m_pFirstEmpty;
+  Node* m_pFirstFull{nullptr};
+  Node* m_pFirstEmpty{nullptr};
 
  public:
   DllObjectPool(size_t objectSize, size_t poolSize);
