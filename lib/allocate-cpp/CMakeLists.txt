@@ -8,5 +8,5 @@ add_library(${PROJECT_NAME} INTERFACE)
 target_include_directories(${PROJECT_NAME} INTERFACE ${CMAKE_CURRENT_LIST_DIR})
 target_link_libraries(${PROJECT_NAME} INTERFACE ignosi-memory-allocate)
 
-install(FILES "dll_allocator.hpp" "dll_pointer.hpp" "dll_object_pool.hpp"
+install(FILES "dll_allocator.hpp" "dll_unique_ptr.hpp" "dll_object_pool.hpp"
         DESTINATION include)
