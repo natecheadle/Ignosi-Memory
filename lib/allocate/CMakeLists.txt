@@ -16,7 +16,7 @@ target_include_directories(
          $<INSTALL_INTERFACE:include>
          $<BUILD_INTERFACE:${IGNOSI_DLL_INCLUDE_DIRS}>)
 
-set_target_properties(${PROJECT_NAME} PROPERTIES VERSION 1.0.0 SOVERSION 1)
+set_target_properties(${PROJECT_NAME} PROPERTIES VERSION 1.0.1 SOVERSION 1)
 
 install(
   TARGETS ${PROJECT_NAME}
