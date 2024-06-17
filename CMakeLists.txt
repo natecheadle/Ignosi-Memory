@@ -23,3 +23,8 @@ if(BUILD_TESTS)
 endif()
 
 install(FILES "${CMAKE_SOURCE_DIR}/LICENSE" DESTINATION share/ignosi-memory)
+
+install(
+  EXPORT ignosi-memoryTargets
+  FILE ignosi-memoryTargets.cmake
+  DESTINATION lib/cmake/ignosi-memory)
