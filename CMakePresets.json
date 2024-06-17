@@ -12,7 +12,8 @@
       "generator": "Ninja",
       "cacheVariables": {
         "VCPKG_OVERLAY_TRIPLETS": "${sourceDir}/cmake",
-        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "X_VCPKG_APPLOCAL_DEPS_INSTALL": true
       }
     },
     {

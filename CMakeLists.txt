@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.21)
 
 project(ignosi-memory)
 
+set(EXPORT_TARGET_NAME ${PROJECT_NAME})
+
 if(NOT DEFINED BUILD_TESTS)
   set(BUILD_TESTS TRUE)
 endif()
@@ -22,4 +24,10 @@ if(BUILD_TESTS)
   add_subdirectory("test")
 endif()
 
-install(FILES "${CMAKE_SOURCE_DIR}/LICENSE" DESTINATION share/ignosi-memory)
+install(FILES "${CMAKE_SOURCE_DIR}/LICENSE"
+        DESTINATION share/${EXPORT_TARGET_NAME})
+
+install(
+  EXPORT ${EXPORT_TARGET_NAME}Targets
+  FILE ${EXPORT_TARGET_NAME}Targets.cmake
+  DESTINATION lib/cmake/${EXPORT_TARGET_NAME})
