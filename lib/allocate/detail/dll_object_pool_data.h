@@ -5,8 +5,12 @@
 namespace ignosi::memory::detail {
 
 class DllObjectPool {
-  struct Node {
-    Node* Next;
+  class Node {
+    Node* m_Next;
+
+   public:
+    void Next(Node* pNode);
+    Node* Next() const { return m_Next; }
   };
 
   std::mutex m_PoolMutex;
@@ -38,6 +42,8 @@ class DllObjectPool {
   Node* findPrevious(Node* pFirst, Node* pCurrent);
   void initializeNewBufferBlock();
   void increaseBufferBlocksSize();
+  bool isBefore(Node* pTest, Node* pCurrent);
+  std::uint8_t* findBuffer(Node* pNode);
 };
 
 }  // namespace ignosi::memory::detail

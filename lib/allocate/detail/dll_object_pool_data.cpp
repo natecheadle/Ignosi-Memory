@@ -33,18 +33,18 @@ void* DllObjectPool::Allocate() {
 
   void* pNew = reinterpret_cast<std::uint8_t*>(m_pFirstEmpty) + sizeof(Node);
   Node* pNewNode = m_pFirstEmpty;
-  m_pFirstEmpty = m_pFirstEmpty->Next;
+  m_pFirstEmpty = m_pFirstEmpty->Next();
 
   if (m_pFirstFull == m_EndNode) {
-    pNewNode->Next = m_EndNode;
-    //TODO this logic is broken with multiple pool blocks
-  } else if (pNewNode < m_pFirstFull) {
-    pNewNode->Next = m_pFirstFull;
+    pNewNode->Next(m_EndNode);
+    m_pFirstFull = pNewNode;
+  } else if (isBefore(pNewNode, m_pFirstFull)) {
+    pNewNode->Next(m_pFirstFull);
     m_pFirstFull = pNewNode;
   } else {
     Node* pPrevFull = findPrevious(m_pFirstFull, m_pFirstEmpty);
-    pNewNode->Next = pPrevFull->Next;
-    pPrevFull->Next = pNewNode;
+    pNewNode->Next(pPrevFull->Next());
+    pPrevFull->Next(pNewNode);
   }
   m_AllocatedCount++;
 
@@ -56,25 +56,31 @@ void DllObjectPool::Dealloate(void* pObj) {
 
   Node* pToDestroy = reinterpret_cast<Node*>(
       reinterpret_cast<std::uint8_t*>(pObj) - sizeof(Node));
+  if (pToDestroy == m_pFirstFull) {
+    m_pFirstFull = pToDestroy->Next();
+  } else {
+    Node* pPrevFull = findPrevious(m_pFirstFull, pToDestroy);
+    pPrevFull->Next(pToDestroy->Next());
+  }
+
   if (m_pFirstEmpty == m_EndNode) {
-    pToDestroy->Next = m_EndNode;
+    pToDestroy->Next(m_EndNode);
     m_pFirstEmpty = pToDestroy;
-    //TODO this logic is broken with multiple pool blocks
-  } else if (pToDestroy < m_pFirstEmpty) {
-    pToDestroy->Next = m_pFirstEmpty;
+  } else if (isBefore(pToDestroy, m_pFirstEmpty)) {
+    pToDestroy->Next(m_pFirstEmpty);
     m_pFirstEmpty = pToDestroy;
   } else {
     Node* pPrevEmpty = findPrevious(m_pFirstEmpty, pToDestroy);
-    pToDestroy->Next = pPrevEmpty->Next;
-    pPrevEmpty->Next = pToDestroy;
+    pToDestroy->Next(pPrevEmpty->Next());
+    pPrevEmpty->Next(pToDestroy);
   }
   m_AllocatedCount--;
 }
 
 DllObjectPool::Node* DllObjectPool::findPrevious(Node* pFirst, Node* pCurrent) {
   Node* pPrevious = pFirst;
-  while (pPrevious->Next < pCurrent) {
-    pPrevious = pPrevious->Next;
+  while (isBefore(pPrevious->Next(), pCurrent)) {
+    pPrevious = pPrevious->Next();
   }
 
   return pPrevious;
@@ -97,18 +103,18 @@ void DllObjectPool::initializeNewBufferBlock() {
     Node* pPreviousBack = reinterpret_cast<Node*>(
         m_pBuffers[m_NextBlockLocation - 1] + ((m_PoolSize - 1) * m_NodeSize));
 
-    pPreviousBack->Next = m_EndNode;
+    pPreviousBack->Next(m_EndNode);
   }
 
   m_pFirstEmpty = reinterpret_cast<Node*>(m_pBuffers[m_NextBlockLocation]);
-  m_pFirstEmpty->Next =
-      reinterpret_cast<Node*>(m_pBuffers[m_NextBlockLocation] + m_NodeSize);
+  m_pFirstEmpty->Next(
+      reinterpret_cast<Node*>(m_pBuffers[m_NextBlockLocation] + m_NodeSize));
 
-  Node* pNext = m_pFirstEmpty->Next;
+  Node* pNext = m_pFirstEmpty->Next();
   for (size_t i = 1; i < m_PoolSize; ++i) {
-    pNext->Next = reinterpret_cast<Node*>(m_pBuffers[m_NextBlockLocation] +
-                                          m_NodeSize * (i + 1));
-    pNext = pNext->Next;
+    pNext->Next(reinterpret_cast<Node*>(m_pBuffers[m_NextBlockLocation] +
+                                        m_NodeSize * (i + 1)));
+    pNext = pNext->Next();
   }
   assert(pNext == m_EndNode);
 
@@ -132,6 +138,39 @@ void DllObjectPool::increaseBufferBlocksSize() {
   if (oldBuffer) {
     IgnosiMemoryDeallocate(oldBuffer);
   }
+}
+
+bool DllObjectPool::isBefore(Node* lhs, Node* rhs) {
+  if (lhs == m_EndNode) {
+    return false;
+  }
+  if (rhs == m_EndNode) {
+    return true;
+  }
+  std::uint8_t* pBufferlhs = findBuffer(lhs);
+  std::uint8_t* pBufferrhs = findBuffer(rhs);
+  if (pBufferlhs == pBufferrhs) {
+    return lhs < rhs;
+  }
+  return pBufferlhs < pBufferrhs;
+}
+
+std::uint8_t* DllObjectPool::findBuffer(Node* pNode) {
+  std::uint8_t* pNodeLoc = reinterpret_cast<std::uint8_t*>(pNode);
+  for (size_t i = 0; i < m_BuffersSize; ++i) {
+    std::uint8_t* pBuffer = m_pBuffers[i];
+    assert(pBuffer);
+    std::uint8_t* pBufferEnd = m_pBuffers[i] + (m_NodeSize * m_PoolSize);
+    if (pNodeLoc >= pBuffer && pNodeLoc < pBufferEnd) {
+      return pBuffer;
+    }
+  }
+  return nullptr;
+}
+
+void DllObjectPool::Node::Next(Node* pNode) {
+  assert(pNode != this);
+  m_Next = pNode;
 }
 
 }  // namespace ignosi::memory::detail

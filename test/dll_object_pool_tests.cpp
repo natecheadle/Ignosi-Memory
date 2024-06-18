@@ -65,7 +65,7 @@ TEST_F(DllObjectPoolFixture, ValidateCreateDestroyTillFull) {
 }
 
 TEST_F(DllObjectPoolFixture, ValidateCreateDestroyTillFullMultiple) {
-  for (int i = 0; i < 5; ++i) {
+  for (int j = 0; j < 5; ++j) {
     std::vector<DllUniquePtr<Data>> objs;
 
     for (size_t i = 0; i < kPoolSize; ++i) {
@@ -78,7 +78,7 @@ TEST_F(DllObjectPoolFixture, ValidateCreateDestroyTillFullMultiple) {
 }
 
 TEST_F(DllObjectPoolFixture, ValidateCreateDestroyReverseOrder) {
-  for (int i = 0; i < 5; ++i) {
+  for (int j = 0; j < 5; ++j) {
     std::vector<DllUniquePtr<Data>> objs;
 
     for (size_t i = 0; i < kPoolSize; ++i) {
@@ -94,7 +94,7 @@ TEST_F(DllObjectPoolFixture, ValidateCreateDestroyReverseOrder) {
 }
 
 TEST_F(DllObjectPoolFixture, ValidateCreateDestroyOutOfOrder) {
-  for (int i = 0; i < 5; ++i) {
+  for (int j = 0; j < 5; ++j) {
     std::vector<DllUniquePtr<Data>> objs;
 
     for (size_t i = 0; i < kPoolSize; ++i) {
