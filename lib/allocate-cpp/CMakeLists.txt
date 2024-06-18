@@ -5,8 +5,12 @@ project(ignosi-memory-allocate-cpp)
 set(CMAKE_CXX_STANDARD 20)
 
 add_library(${PROJECT_NAME} INTERFACE)
-target_include_directories(${PROJECT_NAME} INTERFACE ${CMAKE_CURRENT_LIST_DIR})
+
+target_include_directories(
+  ${PROJECT_NAME} INTERFACE "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>"
+                            "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>")
+
 target_link_libraries(${PROJECT_NAME} INTERFACE ignosi-memory-allocate)
 
 install(FILES "dll_allocator.hpp" "dll_unique_ptr.hpp" "dll_object_pool.hpp"
-        DESTINATION include/${EXPORT_TARGET_NAME})
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
