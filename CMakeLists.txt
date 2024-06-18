@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.21)
 
+enable_language(CXX)
 include(GNUInstallDirs)
 
 project(ignosi-memory)

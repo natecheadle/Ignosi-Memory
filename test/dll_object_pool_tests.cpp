@@ -62,7 +62,6 @@ TEST_F(DllObjectPoolFixture, ValidateCreateDestroyTillFull) {
   for (auto& obj : objs) {
     ASSERT_NE(obj.get(), nullptr);
   }
-  ASSERT_EQ(m_Pool.Create(Data(11, 11.0)), nullptr);
 }
 
 TEST_F(DllObjectPoolFixture, ValidateCreateDestroyTillFullMultiple) {
@@ -75,7 +74,6 @@ TEST_F(DllObjectPoolFixture, ValidateCreateDestroyTillFullMultiple) {
     for (auto& obj : objs) {
       ASSERT_NE(obj.get(), nullptr);
     }
-    ASSERT_EQ(m_Pool.Create(Data(11, 11.0)), nullptr);
   }
 }
 
@@ -89,7 +87,6 @@ TEST_F(DllObjectPoolFixture, ValidateCreateDestroyReverseOrder) {
     for (auto& obj : objs) {
       ASSERT_NE(obj.get(), nullptr);
     }
-    ASSERT_EQ(m_Pool.Create(Data(11, 11.0)), nullptr);
     for (auto it = objs.rbegin(); it != objs.rend(); ++it) {
       it->reset();
     }
@@ -106,7 +103,6 @@ TEST_F(DllObjectPoolFixture, ValidateCreateDestroyOutOfOrder) {
     for (auto& obj : objs) {
       ASSERT_NE(obj, nullptr);
     }
-    ASSERT_EQ(m_Pool.Create(Data(11, 11.0)), nullptr);
     for (size_t i = 0; i < kPoolSize; ++i) {
       if (i % 2 == 0) {
         objs[i].reset();
@@ -149,4 +145,16 @@ TEST_F(DllObjectPoolFixture, ValidateCreateDestroyTillFullMultipleThreads) {
     ASSERT_TRUE(thread2.get());
   }
 }
+
+TEST_F(DllObjectPoolFixture, ValidateCreateDestroyPastFull) {
+  std::vector<DllUniquePtr<Data>> objs;
+
+  for (size_t i = 0; i < kPoolSize * 4; ++i) {
+    objs.push_back(m_Pool.Create(Data(i, (double)i)));
+  }
+  for (auto& obj : objs) {
+    ASSERT_NE(obj.get(), nullptr);
+  }
+}
+
 }  // namespace ignosi::memory::test

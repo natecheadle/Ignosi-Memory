@@ -16,7 +16,9 @@ class DllObjectPool {
   size_t m_NodeSize{0};
   size_t m_AllocatedCount{0};
 
-  std::uint8_t* m_pBuffer{nullptr};
+  std::uint8_t** m_pBuffers{nullptr};
+  size_t m_BuffersSize{0};
+  size_t m_NextBlockLocation{0};
   Node* m_EndNode{nullptr};
 
   Node* m_pFirstFull{nullptr};
@@ -34,6 +36,8 @@ class DllObjectPool {
 
  private:
   Node* findPrevious(Node* pFirst, Node* pCurrent);
+  void initializeNewBufferBlock();
+  void increaseBufferBlocksSize();
 };
 
 }  // namespace ignosi::memory::detail

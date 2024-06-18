@@ -2,38 +2,33 @@
 
 #include <dll_allocate.h>
 
+#include <cassert>
+
 namespace ignosi::memory::detail {
 
 DllObjectPool::DllObjectPool(size_t objectSize, size_t poolSize)
     : m_ObjectSize(objectSize),
       m_PoolSize(poolSize),
       m_NodeSize(objectSize + sizeof(Node)) {
-  m_pBuffer =
-      static_cast<std::uint8_t*>(IgnosiMemoryAllocate(m_NodeSize * m_PoolSize));
-
-  m_EndNode = reinterpret_cast<Node*>(m_pBuffer + (m_PoolSize * m_NodeSize));
+  initializeNewBufferBlock();
   m_pFirstFull = m_EndNode;
-
-  m_pFirstEmpty = reinterpret_cast<Node*>(m_pBuffer);
-  m_pFirstEmpty->Next = reinterpret_cast<Node*>(m_pBuffer + m_NodeSize);
-
-  Node* pNext = m_pFirstEmpty->Next;
-  for (size_t i = 1; i < m_PoolSize; ++i) {
-    pNext->Next = reinterpret_cast<Node*>(m_pBuffer + m_NodeSize * (i + 1));
-    pNext = pNext->Next;
-  }
 }
 
 DllObjectPool::~DllObjectPool() {
   std::unique_lock<std::mutex> lock(m_PoolMutex);
-  IgnosiMemoryDeallocate(m_pBuffer);
+  for (size_t i = 0; i < m_BuffersSize; ++i) {
+    if (m_pBuffers[i]) {
+      IgnosiMemoryDeallocate(m_pBuffers[i]);
+    }
+  }
+  IgnosiMemoryDeallocate(m_pBuffers);
 }
 
 void* DllObjectPool::Allocate() {
   std::unique_lock<std::mutex> lock(m_PoolMutex);
 
   if (m_pFirstEmpty == m_EndNode) {
-    return nullptr;
+    initializeNewBufferBlock();
   }
 
   void* pNew = reinterpret_cast<std::uint8_t*>(m_pFirstEmpty) + sizeof(Node);
@@ -42,6 +37,7 @@ void* DllObjectPool::Allocate() {
 
   if (m_pFirstFull == m_EndNode) {
     pNewNode->Next = m_EndNode;
+    //TODO this logic is broken with multiple pool blocks
   } else if (pNewNode < m_pFirstFull) {
     pNewNode->Next = m_pFirstFull;
     m_pFirstFull = pNewNode;
@@ -63,6 +59,7 @@ void DllObjectPool::Dealloate(void* pObj) {
   if (m_pFirstEmpty == m_EndNode) {
     pToDestroy->Next = m_EndNode;
     m_pFirstEmpty = pToDestroy;
+    //TODO this logic is broken with multiple pool blocks
   } else if (pToDestroy < m_pFirstEmpty) {
     pToDestroy->Next = m_pFirstEmpty;
     m_pFirstEmpty = pToDestroy;
@@ -81,6 +78,60 @@ DllObjectPool::Node* DllObjectPool::findPrevious(Node* pFirst, Node* pCurrent) {
   }
 
   return pPrevious;
+}
+
+void DllObjectPool::initializeNewBufferBlock() {
+  if (m_NextBlockLocation >= m_BuffersSize) {
+    increaseBufferBlocksSize();
+  }
+
+  assert(m_pBuffers[m_NextBlockLocation] == nullptr);
+
+  m_pBuffers[m_NextBlockLocation] =
+      static_cast<std::uint8_t*>(IgnosiMemoryAllocate(m_NodeSize * m_PoolSize));
+
+  m_EndNode = reinterpret_cast<Node*>(m_pBuffers[m_NextBlockLocation] +
+                                      (m_PoolSize * m_NodeSize));
+
+  if (m_NextBlockLocation > 0) {
+    Node* pPreviousBack = reinterpret_cast<Node*>(
+        m_pBuffers[m_NextBlockLocation - 1] + ((m_PoolSize - 1) * m_NodeSize));
+
+    pPreviousBack->Next = m_EndNode;
+  }
+
+  m_pFirstEmpty = reinterpret_cast<Node*>(m_pBuffers[m_NextBlockLocation]);
+  m_pFirstEmpty->Next =
+      reinterpret_cast<Node*>(m_pBuffers[m_NextBlockLocation] + m_NodeSize);
+
+  Node* pNext = m_pFirstEmpty->Next;
+  for (size_t i = 1; i < m_PoolSize; ++i) {
+    pNext->Next = reinterpret_cast<Node*>(m_pBuffers[m_NextBlockLocation] +
+                                          m_NodeSize * (i + 1));
+    pNext = pNext->Next;
+  }
+  assert(pNext == m_EndNode);
+
+  m_NextBlockLocation++;
+}
+
+void DllObjectPool::increaseBufferBlocksSize() {
+  size_t newBuffersSize = m_BuffersSize + 8;
+  std::uint8_t** pBuffers = static_cast<std::uint8_t**>(
+      IgnosiMemoryAllocate(sizeof(std::uint8_t*) * newBuffersSize));
+
+  std::fill(pBuffers, pBuffers + newBuffersSize, nullptr);
+  if (m_pBuffers) {
+    std::copy(m_pBuffers, m_pBuffers + m_BuffersSize, pBuffers);
+  }
+
+  std::uint8_t** oldBuffer = m_pBuffers;
+  m_pBuffers = pBuffers;
+  m_BuffersSize = newBuffersSize;
+
+  if (oldBuffer) {
+    IgnosiMemoryDeallocate(oldBuffer);
+  }
 }
 
 }  // namespace ignosi::memory::detail
