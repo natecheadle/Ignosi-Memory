@@ -1,5 +1,5 @@
 @PACKAGE_INIT@
 
-include("${CMAKE_CURRENT_LIST_DIR}/ignosi-memoryTargets.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/ignosi-memory-targets.cmake")
 
 check_required_components(ignosi-memory)

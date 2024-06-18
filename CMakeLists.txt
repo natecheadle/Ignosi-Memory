@@ -25,6 +25,3 @@ add_subdirectory("lib")
 if(BUILD_TESTS)
   add_subdirectory("test")
 endif()
-
-install(FILES "${CMAKE_SOURCE_DIR}/LICENSE"
-        DESTINATION share/${EXPORT_TARGET_NAME})
