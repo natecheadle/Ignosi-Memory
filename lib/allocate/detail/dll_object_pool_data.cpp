@@ -24,8 +24,8 @@ void* DllObjectPool::Allocate() {
     if (m_FreeObjects.empty()) {
       initializeNewBufferBlock();
     }
-    void* pNew = m_FreeObjects.front();
-    m_FreeObjects.pop();
+    void* pNew = m_FreeObjects.back();
+    m_FreeObjects.pop_back();
 
     m_AllocatedObjects.push_back(pNew);
     std::sort(m_AllocatedObjects.begin(), m_AllocatedObjects.end());
@@ -50,7 +50,7 @@ void DllObjectPool::Deallocate(void* pObj) {
     }
 
     m_AllocatedObjects.erase(objToRemove);
-    m_FreeObjects.push(pObj);
+    m_FreeObjects.push_back(pObj);
   } catch (std::exception& ex) {
     fmt::print("{}", ex.what());
   }
@@ -66,9 +66,11 @@ void DllObjectPool::initializeNewBufferBlock() {
   m_Buffers.push_back(std::unique_ptr<std::uint8_t[]>(
       new std::uint8_t[m_PoolSize * m_ObjectSize]));
   m_AllocatedObjects.reserve(m_Buffers.size() * m_PoolSize);
+  m_FreeObjects.reserve(m_Buffers.size() * m_PoolSize);
+
   std::uint8_t* pNewBuffer = m_Buffers.back().get();
   for (size_t i = 0; i < m_PoolSize; ++i) {
-    m_FreeObjects.push(pNewBuffer + (i * m_ObjectSize));
+    m_FreeObjects.push_back(pNewBuffer + (i * m_ObjectSize));
   }
 }
 

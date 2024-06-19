@@ -1,7 +1,6 @@
 #pragma once
 
 #include <mutex>
-#include <queue>
 #include <vector>
 
 namespace ignosi::memory::detail {
@@ -9,7 +8,7 @@ namespace ignosi::memory::detail {
 class DllObjectPool {
 
   mutable std::mutex m_PoolMutex;
-  std::queue<void*> m_FreeObjects;
+  std::vector<void*> m_FreeObjects;
   std::vector<void*> m_AllocatedObjects;
 
   const size_t m_ObjectSize{0};
