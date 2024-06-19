@@ -33,6 +33,8 @@ class DllObjectPool {
     return nullptr;
   }
 
+  DllUniquePtr<T> Create(const T& obj) { return Create(T(obj)); }
+
   void Destroy(T* obj) {
     obj->~T();
     IgnosiMemoryPoolDeallocate(m_pPool, obj);

@@ -1,49 +1,41 @@
 #pragma once
 
 #include <mutex>
+#include <queue>
+#include <list>
 
 namespace ignosi::memory::detail {
 
 class DllObjectPool {
-  class Node {
-    Node* m_Next;
 
-   public:
-    void Next(Node* pNode);
-    Node* Next() const { return m_Next; }
-  };
+  mutable std::mutex m_PoolMutex;
+  std::queue<void*> m_FreeObjects;
+  std::list<void*> m_AllocatedObjects;
 
-  std::mutex m_PoolMutex;
+  const size_t m_ObjectSize{0};
+  const size_t m_PoolSize{0};
 
-  size_t m_ObjectSize{0};
-  size_t m_PoolSize{0};
-  size_t m_NodeSize{0};
-  size_t m_AllocatedCount{0};
-
-  std::uint8_t** m_pBuffers{nullptr};
+  std::vector<std::unique_ptr<std::uint8_t[]>> m_Buffers;
   size_t m_BuffersSize{0};
-  size_t m_NextBlockLocation{0};
-  Node* m_EndNode{nullptr};
-
-  Node* m_pFirstFull{nullptr};
-  Node* m_pFirstEmpty{nullptr};
 
  public:
   DllObjectPool(size_t objectSize, size_t poolSize);
   ~DllObjectPool();
 
+  DllObjectPool(const DllObjectPool& other) = delete;
+  DllObjectPool(DllObjectPool&& other) noexcept = delete;
+
+  DllObjectPool& operator=(const DllObjectPool& other) = delete;
+  DllObjectPool& operator=(DllObjectPool&& other) noexcept = delete;
+
   void* Allocate();
   void Dealloate(void* pObj);
 
-  size_t PoolSize() const { return m_PoolSize; }
-  size_t AllocatedCount() const { return m_AllocatedCount; }
+  size_t PoolSize() const;
+  size_t AllocatedCount() const;
 
  private:
-  Node* findPrevious(Node* pFirst, Node* pCurrent);
   void initializeNewBufferBlock();
-  void increaseBufferBlocksSize();
-  bool isBefore(Node* pTest, Node* pCurrent);
-  std::uint8_t* findBuffer(Node* pNode);
 };
 
 }  // namespace ignosi::memory::detail
