@@ -26,7 +26,7 @@ EXPORT_SPEC void IgnosiMemoryPoolDeallocate(IgnosiMemoryPool pool, void* pObj) {
     return;
   }
 
-  static_cast<DllObjectPool*>(pool)->Dealloate(pObj);
+  static_cast<DllObjectPool*>(pool)->Deallocate(pObj);
 }
 
 EXPORT_SPEC size_t IgnosiMemoryPoolSize(IgnosiMemoryPool pool) {

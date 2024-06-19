@@ -2,7 +2,7 @@
 
 #include <mutex>
 #include <queue>
-#include <list>
+#include <vector>
 
 namespace ignosi::memory::detail {
 
@@ -10,7 +10,7 @@ class DllObjectPool {
 
   mutable std::mutex m_PoolMutex;
   std::queue<void*> m_FreeObjects;
-  std::list<void*> m_AllocatedObjects;
+  std::vector<void*> m_AllocatedObjects;
 
   const size_t m_ObjectSize{0};
   const size_t m_PoolSize{0};
@@ -29,7 +29,7 @@ class DllObjectPool {
   DllObjectPool& operator=(DllObjectPool&& other) noexcept = delete;
 
   void* Allocate();
-  void Dealloate(void* pObj);
+  void Deallocate(void* pObj);
 
   size_t PoolSize() const;
   size_t AllocatedCount() const;
