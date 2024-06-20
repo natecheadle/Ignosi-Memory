@@ -40,7 +40,7 @@ install(
 
 include(CMakePackageConfigHelpers)
 
-set(version 1.0.2)
+set(version 1.1.0)
 
 set_property(TARGET ${PROJECT_NAME} PROPERTY VERSION ${version})
 set_property(TARGET ${PROJECT_NAME} PROPERTY SOVERSION 1)
