@@ -103,6 +103,11 @@ TEST_F(DllObjectPoolFixture, ValidateCreateDestroyOutOfOrder) {
       }
     }
 
+    for (size_t i = 0; i < m_ActualData.size(); ++i) {
+      m_ActualData[i] = m_Pool.Create(Data{i, (double)i * (double)i});
+    }
+    validateData();
+
     clearData();
   }
 }
