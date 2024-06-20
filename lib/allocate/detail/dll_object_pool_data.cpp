@@ -1,86 +1,76 @@
 #include "dll_object_pool_data.h"
 
-#include <dll_allocate.h>
+#include <fmt/format.h>
+
+#include <algorithm>
+#include <cassert>
 
 namespace ignosi::memory::detail {
 
 DllObjectPool::DllObjectPool(size_t objectSize, size_t poolSize)
-    : m_ObjectSize(objectSize),
-      m_PoolSize(poolSize),
-      m_NodeSize(objectSize + sizeof(Node)) {
-  m_pBuffer =
-      static_cast<std::uint8_t*>(IgnosiMemoryAllocate(m_NodeSize * m_PoolSize));
-
-  m_EndNode = reinterpret_cast<Node*>(m_pBuffer + (m_PoolSize * m_NodeSize));
-  m_pFirstFull = m_EndNode;
-
-  m_pFirstEmpty = reinterpret_cast<Node*>(m_pBuffer);
-  m_pFirstEmpty->Next = reinterpret_cast<Node*>(m_pBuffer + m_NodeSize);
-
-  Node* pNext = m_pFirstEmpty->Next;
-  for (size_t i = 1; i < m_PoolSize; ++i) {
-    pNext->Next = reinterpret_cast<Node*>(m_pBuffer + m_NodeSize * (i + 1));
-    pNext = pNext->Next;
-  }
+    : m_ObjectSize(objectSize), m_PoolSize(poolSize) {
+  initializeNewBufferBlock();
 }
 
 DllObjectPool::~DllObjectPool() {
   std::unique_lock<std::mutex> lock(m_PoolMutex);
-  IgnosiMemoryDeallocate(m_pBuffer);
+  m_Buffers.clear();
 }
 
 void* DllObjectPool::Allocate() {
-  std::unique_lock<std::mutex> lock(m_PoolMutex);
+  try {
+    std::unique_lock<std::mutex> lock(m_PoolMutex);
+    if (m_FreeObjects.empty()) {
+      initializeNewBufferBlock();
+    }
+    void* pNew = m_FreeObjects.back();
+    m_FreeObjects.pop_back();
 
-  if (m_pFirstEmpty == m_EndNode) {
-    return nullptr;
+    m_AllocatedObjects.push_back(pNew);
+    std::sort(m_AllocatedObjects.begin(), m_AllocatedObjects.end());
+
+    return pNew;
+  } catch (const std::exception& ex) {
+    fmt::print("{}", ex.what());
   }
-
-  void* pNew = reinterpret_cast<std::uint8_t*>(m_pFirstEmpty) + sizeof(Node);
-  Node* pNewNode = m_pFirstEmpty;
-  m_pFirstEmpty = m_pFirstEmpty->Next;
-
-  if (m_pFirstFull == m_EndNode) {
-    pNewNode->Next = m_EndNode;
-  } else if (pNewNode < m_pFirstFull) {
-    pNewNode->Next = m_pFirstFull;
-    m_pFirstFull = pNewNode;
-  } else {
-    Node* pPrevFull = findPrevious(m_pFirstFull, m_pFirstEmpty);
-    pNewNode->Next = pPrevFull->Next;
-    pPrevFull->Next = pNewNode;
-  }
-  m_AllocatedCount++;
-
-  return pNew;
+  return nullptr;
 }
 
-void DllObjectPool::Dealloate(void* pObj) {
-  std::unique_lock<std::mutex> lock(m_PoolMutex);
-
-  Node* pToDestroy = reinterpret_cast<Node*>(
-      reinterpret_cast<std::uint8_t*>(pObj) - sizeof(Node));
-  if (m_pFirstEmpty == m_EndNode) {
-    pToDestroy->Next = m_EndNode;
-    m_pFirstEmpty = pToDestroy;
-  } else if (pToDestroy < m_pFirstEmpty) {
-    pToDestroy->Next = m_pFirstEmpty;
-    m_pFirstEmpty = pToDestroy;
-  } else {
-    Node* pPrevEmpty = findPrevious(m_pFirstEmpty, pToDestroy);
-    pToDestroy->Next = pPrevEmpty->Next;
-    pPrevEmpty->Next = pToDestroy;
+void DllObjectPool::Deallocate(void* pObj) {
+  if (!pObj) {
+    return;
   }
-  m_AllocatedCount--;
+  try {
+    std::unique_lock<std::mutex> lock(m_PoolMutex);
+    auto objToRemove = std::lower_bound(m_AllocatedObjects.begin(),
+                                        m_AllocatedObjects.end(), pObj);
+    if (objToRemove == m_AllocatedObjects.end()) {
+      throw std::runtime_error("Object is not in allocated objects list");
+    }
+
+    m_AllocatedObjects.erase(objToRemove);
+    m_FreeObjects.push_back(pObj);
+  } catch (std::exception& ex) {
+    fmt::print("{}", ex.what());
+  }
 }
 
-DllObjectPool::Node* DllObjectPool::findPrevious(Node* pFirst, Node* pCurrent) {
-  Node* pPrevious = pFirst;
-  while (pPrevious->Next < pCurrent) {
-    pPrevious = pPrevious->Next;
-  }
+size_t DllObjectPool::PoolSize() const { return m_PoolSize; }
+size_t DllObjectPool::AllocatedCount() const {
+  std::unique_lock<std::mutex> lock(m_PoolMutex);
+  return m_AllocatedObjects.size();
+}
 
-  return pPrevious;
+void DllObjectPool::initializeNewBufferBlock() {
+  m_Buffers.push_back(std::unique_ptr<std::uint8_t[]>(
+      new std::uint8_t[m_PoolSize * m_ObjectSize]));
+  m_AllocatedObjects.reserve(m_Buffers.size() * m_PoolSize);
+  m_FreeObjects.reserve(m_Buffers.size() * m_PoolSize);
+
+  std::uint8_t* pNewBuffer = m_Buffers.back().get();
+  for (size_t i = 0; i < m_PoolSize; ++i) {
+    m_FreeObjects.push_back(pNewBuffer + (i * m_ObjectSize));
+  }
 }
 
 }  // namespace ignosi::memory::detail

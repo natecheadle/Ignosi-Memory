@@ -3,12 +3,16 @@ cmake_minimum_required(VERSION 3.21)
 project(ignosi-memory-allocate)
 
 find_path(IGNOSI_DLL_INCLUDE_DIRS "dll_defines.h")
+find_package(fmt CONFIG REQUIRED)
+
 set(CMAKE_CXX_STANDARD 20)
 
 add_library(
   ${PROJECT_NAME} SHARED "dll_allocate.cpp" "detail/dll_object_pool_data.cpp"
                          "dll_object_pool.cpp")
+
 target_compile_definitions(${PROJECT_NAME} PRIVATE EXPORT)
+target_link_libraries(${PROJECT_NAME} PRIVATE fmt::fmt-header-only)
 
 target_include_directories(
   ${PROJECT_NAME}
@@ -36,7 +40,7 @@ install(
 
 include(CMakePackageConfigHelpers)
 
-set(version 1.0.2)
+set(version 1.1.0)
 
 set_property(TARGET ${PROJECT_NAME} PROPERTY VERSION ${version})
 set_property(TARGET ${PROJECT_NAME} PROPERTY SOVERSION 1)
