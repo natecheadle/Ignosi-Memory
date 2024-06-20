@@ -1,12 +1,12 @@
 #pragma once
 
+#include <memory>
 #include <mutex>
 #include <vector>
 
 namespace ignosi::memory::detail {
 
 class DllObjectPool {
-
   mutable std::mutex m_PoolMutex;
   std::vector<void*> m_FreeObjects;
   std::vector<void*> m_AllocatedObjects;
