@@ -15,6 +15,8 @@ if(BUILD_SHARED_LIBS AND WIN32)
     ${PROJECT_NAME}
     PRIVATE "EXPORT_SPEC=__declspec(dllexport)"
     INTERFACE "EXPORT_SPEC=__declspec(dllimport)")
+else()
+  target_compile_definitions(${PROJECT_NAME} PUBLIC "EXPORT_SPEC=""")
 endif()
 
 target_link_libraries(${PROJECT_NAME} PRIVATE fmt::fmt-header-only)
