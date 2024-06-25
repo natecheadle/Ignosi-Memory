@@ -1,7 +1,5 @@
 #pragma once
 
-#include <dll_defines.h>
-
 #include <cstddef>
 
 extern "C" {
