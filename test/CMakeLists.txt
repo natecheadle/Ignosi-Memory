@@ -13,11 +13,8 @@ add_executable(
 find_package(GTest CONFIG REQUIRED)
 find_package(fmt CONFIG REQUIRED)
 
-target_link_libraries(
-  ${PROJECT_NAME}
-  PRIVATE GTest::gtest ignosi-memory-allocate-cpp
-ignosi-memory-allocate
-          fmt::fmt )
+target_link_libraries(${PROJECT_NAME} PRIVATE GTest::gtest ignosi-memory
+                                              fmt::fmt)
 
 gtest_add_tests(TARGET ${PROJECT_NAME})
 if(WIN32)
