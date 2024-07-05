@@ -43,6 +43,9 @@ class DllObjectPool {
   size_t AllocatedCount() const {
     return IgnosiMemoryPoolAllocatedCount(m_pPool);
   }
+  size_t MaxAllocatedCount() const {
+    return IgnosiMemoryPoolMaxAllocatedCount(m_pPool);
+  }
 };
 
 }  // namespace ignosi::memory

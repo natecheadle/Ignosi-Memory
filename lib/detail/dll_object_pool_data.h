@@ -1,21 +1,22 @@
 #pragma once
 
+#include <array>
+#include <atomic>
+#include <boost/lockfree/stack.hpp>
 #include <memory>
 #include <mutex>
-#include <vector>
 
 namespace ignosi::memory::detail {
 
 class DllObjectPool {
-  mutable std::mutex m_PoolMutex;
-  size_t m_AllocatedCount{0};
-  std::vector<void*> m_FreeObjects;
+  std::atomic<size_t> m_AllocatedCount{0};
+  boost::lockfree::stack<void*> m_FreeObjects;
 
   const size_t m_ObjectSize{0};
   const size_t m_PoolSize{0};
 
-  std::vector<std::unique_ptr<std::uint8_t[]>> m_Buffers;
-  size_t m_BuffersSize{0};
+  std::array<std::unique_ptr<std::uint8_t[]>, 256> m_Buffers;
+  std::atomic<size_t> m_BuffersSize{0};
 
  public:
   DllObjectPool(size_t objectSize, size_t poolSize);
@@ -32,6 +33,7 @@ class DllObjectPool {
 
   size_t PoolSize() const;
   size_t AllocatedCount() const;
+  size_t MaxAllocatedCount() const;
 
  private:
   void initializeNewBufferBlock();

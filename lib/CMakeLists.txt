@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.21)
 
 find_package(fmt CONFIG REQUIRED)
+find_package(Boost REQUIRED COMPONENTS lockfree)
 
 set(CMAKE_CXX_STANDARD 20)
 
@@ -19,7 +20,7 @@ else()
   target_compile_definitions(${PROJECT_NAME} PUBLIC "EXPORT_SPEC=")
 endif()
 
-target_link_libraries(${PROJECT_NAME} PRIVATE fmt::fmt)
+target_link_libraries(${PROJECT_NAME} PRIVATE fmt::fmt Boost::lockfree)
 
 target_include_directories(
   ${PROJECT_NAME} PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
@@ -46,7 +47,7 @@ install(
 
 include(CMakePackageConfigHelpers)
 
-set(version 1.2.1)
+set(version 1.3.0)
 
 set_property(TARGET ${PROJECT_NAME} PROPERTY VERSION ${version})
 set_property(TARGET ${PROJECT_NAME} PROPERTY SOVERSION 1)
