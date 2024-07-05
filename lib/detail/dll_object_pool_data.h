@@ -1,6 +1,5 @@
 #pragma once
 
-#include <array>
 #include <atomic>
 #include <boost/lockfree/stack.hpp>
 #include <memory>
@@ -9,13 +8,13 @@
 namespace ignosi::memory::detail {
 
 class DllObjectPool {
-  std::atomic<size_t> m_AllocatedCount{0};
+  const size_t m_ObjectSize;
+  const size_t m_PoolSize;
+
   boost::lockfree::stack<void*> m_FreeObjects;
+  boost::lockfree::stack<std::shared_ptr<std::uint8_t[]>> m_Buffers;
 
-  const size_t m_ObjectSize{0};
-  const size_t m_PoolSize{0};
-
-  std::array<std::unique_ptr<std::uint8_t[]>, 256> m_Buffers;
+  std::atomic<size_t> m_AllocatedCount{0};
   std::atomic<size_t> m_BuffersSize{0};
 
  public:
@@ -33,7 +32,6 @@ class DllObjectPool {
 
   size_t PoolSize() const;
   size_t AllocatedCount() const;
-  size_t MaxAllocatedCount() const;
 
  private:
   void initializeNewBufferBlock();

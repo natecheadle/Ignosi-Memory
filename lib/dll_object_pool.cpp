@@ -42,10 +42,3 @@ EXPORT_SPEC size_t IgnosiMemoryPoolAllocatedCount(IgnosiMemoryPool pool) {
   }
   return static_cast<DllObjectPool*>(pool)->AllocatedCount();
 }
-
-EXPORT_SPEC size_t IgnosiMemoryPoolMaxAllocatedCount(IgnosiMemoryPool pool) {
-  if (!pool) {
-    return 0;
-  }
-  return static_cast<DllObjectPool*>(pool)->MaxAllocatedCount();
-}
