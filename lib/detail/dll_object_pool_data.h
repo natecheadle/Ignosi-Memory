@@ -8,8 +8,8 @@ namespace ignosi::memory::detail {
 
 class DllObjectPool {
   mutable std::mutex m_PoolMutex;
+  size_t m_AllocatedCount{0};
   std::vector<void*> m_FreeObjects;
-  std::vector<void*> m_AllocatedObjects;
 
   const size_t m_ObjectSize{0};
   const size_t m_PoolSize{0};

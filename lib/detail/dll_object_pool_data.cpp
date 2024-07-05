@@ -2,7 +2,6 @@
 
 #include <fmt/format.h>
 
-#include <algorithm>
 #include <cassert>
 
 namespace ignosi::memory::detail {
@@ -25,9 +24,7 @@ void* DllObjectPool::Allocate() {
     }
     void* pNew = m_FreeObjects.back();
     m_FreeObjects.pop_back();
-
-    m_AllocatedObjects.push_back(pNew);
-    std::sort(m_AllocatedObjects.begin(), m_AllocatedObjects.end());
+    m_AllocatedCount++;
 
     return pNew;
   } catch (const std::exception& ex) {
@@ -42,14 +39,8 @@ void DllObjectPool::Deallocate(void* pObj) {
   }
   try {
     std::unique_lock<std::mutex> lock(m_PoolMutex);
-    auto objToRemove = std::lower_bound(m_AllocatedObjects.begin(),
-                                        m_AllocatedObjects.end(), pObj);
-    if (objToRemove == m_AllocatedObjects.end()) {
-      throw std::runtime_error("Object is not in allocated objects list");
-    }
-
-    m_AllocatedObjects.erase(objToRemove);
     m_FreeObjects.push_back(pObj);
+    m_AllocatedCount--;
   } catch (std::exception& ex) {
     fmt::print("{}", ex.what());
   }
@@ -58,13 +49,12 @@ void DllObjectPool::Deallocate(void* pObj) {
 size_t DllObjectPool::PoolSize() const { return m_PoolSize; }
 size_t DllObjectPool::AllocatedCount() const {
   std::unique_lock<std::mutex> lock(m_PoolMutex);
-  return m_AllocatedObjects.size();
+  return m_AllocatedCount;
 }
 
 void DllObjectPool::initializeNewBufferBlock() {
   m_Buffers.push_back(std::unique_ptr<std::uint8_t[]>(
       new std::uint8_t[m_PoolSize * m_ObjectSize]));
-  m_AllocatedObjects.reserve(m_Buffers.size() * m_PoolSize);
   m_FreeObjects.reserve(m_Buffers.size() * m_PoolSize);
 
   std::uint8_t* pNewBuffer = m_Buffers.back().get();
