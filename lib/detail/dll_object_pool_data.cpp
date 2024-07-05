@@ -2,33 +2,26 @@
 
 #include <fmt/format.h>
 
-#include <algorithm>
 #include <cassert>
 
 namespace ignosi::memory::detail {
 
 DllObjectPool::DllObjectPool(size_t objectSize, size_t poolSize)
-    : m_ObjectSize(objectSize), m_PoolSize(poolSize) {
+    : m_ObjectSize(objectSize),
+      m_PoolSize(poolSize),
+      m_FreeObjects(poolSize),
+      m_Buffers(256) {
   initializeNewBufferBlock();
-}
-
-DllObjectPool::~DllObjectPool() {
-  std::unique_lock<std::mutex> lock(m_PoolMutex);
-  m_Buffers.clear();
 }
 
 void* DllObjectPool::Allocate() {
   try {
-    std::unique_lock<std::mutex> lock(m_PoolMutex);
-    if (m_FreeObjects.empty()) {
+    void* pNew{nullptr};
+    while (!m_FreeObjects.pop(pNew)) {
       initializeNewBufferBlock();
     }
-    void* pNew = m_FreeObjects.back();
-    m_FreeObjects.pop_back();
 
-    m_AllocatedObjects.push_back(pNew);
-    std::sort(m_AllocatedObjects.begin(), m_AllocatedObjects.end());
-
+    m_AllocatedCount++;
     return pNew;
   } catch (const std::exception& ex) {
     fmt::print("{}", ex.what());
@@ -41,35 +34,33 @@ void DllObjectPool::Deallocate(void* pObj) {
     return;
   }
   try {
-    std::unique_lock<std::mutex> lock(m_PoolMutex);
-    auto objToRemove = std::lower_bound(m_AllocatedObjects.begin(),
-                                        m_AllocatedObjects.end(), pObj);
-    if (objToRemove == m_AllocatedObjects.end()) {
-      throw std::runtime_error("Object is not in allocated objects list");
-    }
-
-    m_AllocatedObjects.erase(objToRemove);
-    m_FreeObjects.push_back(pObj);
+    m_FreeObjects.push(pObj);
+    m_AllocatedCount--;
   } catch (std::exception& ex) {
     fmt::print("{}", ex.what());
   }
 }
 
 size_t DllObjectPool::PoolSize() const { return m_PoolSize; }
-size_t DllObjectPool::AllocatedCount() const {
-  std::unique_lock<std::mutex> lock(m_PoolMutex);
-  return m_AllocatedObjects.size();
-}
+size_t DllObjectPool::AllocatedCount() const { return m_AllocatedCount; }
 
 void DllObjectPool::initializeNewBufferBlock() {
-  m_Buffers.push_back(std::unique_ptr<std::uint8_t[]>(
-      new std::uint8_t[m_PoolSize * m_ObjectSize]));
-  m_AllocatedObjects.reserve(m_Buffers.size() * m_PoolSize);
-  m_FreeObjects.reserve(m_Buffers.size() * m_PoolSize);
+  size_t newSize = ++m_BuffersSize;
 
-  std::uint8_t* pNewBuffer = m_Buffers.back().get();
+  std::shared_ptr<std::uint8_t[]> pNewBufferUnique =
+      std::shared_ptr<std::uint8_t[]>(
+          new std::uint8_t[m_PoolSize * m_ObjectSize]);
+
+  std::uint8_t* pNewBuffer = pNewBufferUnique.get();
+  if (!pNewBuffer) {
+    fmt::print("Failed to create new buffer");
+    return;
+  }
+
+  m_FreeObjects.reserve(newSize * m_PoolSize);
+  m_Buffers.push(std::move(pNewBufferUnique));
   for (size_t i = 0; i < m_PoolSize; ++i) {
-    m_FreeObjects.push_back(pNewBuffer + (i * m_ObjectSize));
+    m_FreeObjects.push(pNewBuffer + (i * m_ObjectSize));
   }
 }
 

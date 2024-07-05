@@ -1,25 +1,25 @@
 #pragma once
 
+#include <atomic>
+#include <boost/lockfree/stack.hpp>
 #include <memory>
 #include <mutex>
-#include <vector>
 
 namespace ignosi::memory::detail {
 
 class DllObjectPool {
-  mutable std::mutex m_PoolMutex;
-  std::vector<void*> m_FreeObjects;
-  std::vector<void*> m_AllocatedObjects;
+  const size_t m_ObjectSize;
+  const size_t m_PoolSize;
 
-  const size_t m_ObjectSize{0};
-  const size_t m_PoolSize{0};
+  boost::lockfree::stack<void*> m_FreeObjects;
+  boost::lockfree::stack<std::shared_ptr<std::uint8_t[]>> m_Buffers;
 
-  std::vector<std::unique_ptr<std::uint8_t[]>> m_Buffers;
-  size_t m_BuffersSize{0};
+  std::atomic<size_t> m_AllocatedCount{0};
+  std::atomic<size_t> m_BuffersSize{0};
 
  public:
   DllObjectPool(size_t objectSize, size_t poolSize);
-  ~DllObjectPool();
+  ~DllObjectPool() = default;
 
   DllObjectPool(const DllObjectPool& other) = delete;
   DllObjectPool(DllObjectPool&& other) noexcept = delete;
