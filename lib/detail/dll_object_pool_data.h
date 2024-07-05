@@ -19,7 +19,7 @@ class DllObjectPool {
 
  public:
   DllObjectPool(size_t objectSize, size_t poolSize);
-  ~DllObjectPool();
+  ~DllObjectPool() = default;
 
   DllObjectPool(const DllObjectPool& other) = delete;
   DllObjectPool(DllObjectPool&& other) noexcept = delete;

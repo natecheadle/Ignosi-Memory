@@ -14,13 +14,6 @@ DllObjectPool::DllObjectPool(size_t objectSize, size_t poolSize)
   initializeNewBufferBlock();
 }
 
-DllObjectPool::~DllObjectPool() {
-  std::shared_ptr<std::uint8_t[]> buffer;
-  while (m_Buffers.pop(buffer)) {
-    buffer.reset();
-  }
-}
-
 void* DllObjectPool::Allocate() {
   try {
     void* pNew{nullptr};
